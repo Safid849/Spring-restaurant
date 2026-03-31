@@ -39,15 +39,13 @@ public class StockMovementRepository {
                 Timestamp.from(from),
                 Timestamp.from(to)            );
     }
-    public void save(StockMovement movement) {
-        String sql = "INSERT INTO stockmovement (id_ingredient, creation_datetime, quantity, type, unit) " +
-                "VALUES (?, ?, ?, ?, ?)";
+    public void save(StockMovement m) {
+        String sql = "INSERT INTO stockmovement (id_ingredient, creation_datetime, quantity, unit, type) VALUES (?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
-                movement.getIdIngredient(),
-                movement.getCreationDatetime(),
-                movement.getQuantity(),
-                movement.getType().name(),
-                movement.getUnit()
+                m.getIdIngredient(),
+                Timestamp.from(m.getCreationDatetime()),                 m.getQuantity(),
+                m.getUnit(),
+                m.getType().name()
         );
     }
 
