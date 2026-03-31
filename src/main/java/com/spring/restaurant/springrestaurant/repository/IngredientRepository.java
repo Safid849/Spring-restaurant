@@ -20,10 +20,11 @@ public class IngredientRepository {
     }
 
     public Optional<Ingredient> findById(Integer id) {
-        String sql = "SELECT id, name, category, price FROM ingredient WHERE id = ?";
+        String sql = "SELECT * FROM ingredient WHERE id = ?";
         try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject(sql,
-                    new BeanPropertyRowMapper<>(Ingredient.class), id));
+            Ingredient ingredient = jdbcTemplate.queryForObject(sql,
+                    new BeanPropertyRowMapper<>(Ingredient.class), id);
+            return Optional.ofNullable(ingredient);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }

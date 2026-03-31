@@ -2,9 +2,7 @@ package com.spring.restaurant.springrestaurant.repository;
 
 
 import com.spring.restaurant.springrestaurant.entity.Dish;
-import com.spring.restaurant.springrestaurant.entity.DishIngredient;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;

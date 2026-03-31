@@ -2,12 +2,8 @@ package com.spring.restaurant.springrestaurant.controller;
 
 import com.spring.restaurant.springrestaurant.entity.Dish;
 import com.spring.restaurant.springrestaurant.entity.DishIngredient;
-import com.spring.restaurant.springrestaurant.entity.Ingredient;
-import com.spring.restaurant.springrestaurant.exception.RessourceNotFoundException;
+import com.spring.restaurant.springrestaurant.exception.ResourceNotFoundException;
 import com.spring.restaurant.springrestaurant.service.DishService;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +19,7 @@ public class DishController {
         this.dishService = dishService;
     }
     @GetMapping
-    public ResponseEntity<List<Dish>> getAllDishes() {
+    public ResponseEntity<List<Dish>> getAllDishes() throws ResourceNotFoundException {
         List<Dish> dishes = dishService.getAllDishes();
         return ResponseEntity.ok(dishes);
     }
@@ -32,7 +28,7 @@ public class DishController {
     public ResponseEntity<Void> updateDishIngredients(
             @PathVariable Integer id,
             @RequestBody List<DishIngredient> ingredients
-    ) throws RessourceNotFoundException {
+    ) throws ResourceNotFoundException {
         dishService.updateDishIngredients(id, ingredients);
         return ResponseEntity.noContent().build();
     }

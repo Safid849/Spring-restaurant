@@ -12,8 +12,8 @@ import java.util.List;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(RessourceNotFoundException.class)
-    public ResponseEntity<String> handleNotFound(RessourceNotFoundException e) {
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<String> handleNotFound(ResourceNotFoundException e) {
         return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 
