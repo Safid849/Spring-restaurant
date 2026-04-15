@@ -1,0 +1,176 @@
+openapi: 3.0.3
+info:
+  title: Spring Restaurant API
+  description: API for managing ingredients, stock movements, and restaurant dishes.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /ingredients:
+    get:
+      summary: Get all ingredients
+      operationId: getAllIngredients
+      responses:
+        '200':
+          description: A list of ingredients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+
+  /ingredients/{id}:
+    get:
+      summary: Get an ingredient by ID
+      operationId: getIngredientById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Ingredient found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+        '404':
+          description: Ingredient not found
+
+  /ingredients/{id}/stock:
+    get:
+      summary: Get stock level at a specific time
+      operationId: getIngredientStock
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: at
+          in: query
+          required: true
+          description: Timestamp in ISO-8601 format (e.g., 2026-04-15T12:00:00Z)
+          schema:
+            type: string
+            format: date-time
+        - name: unit
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Unit'
+      responses:
+        '200':
+          description: Calculated stock quantity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockValue'
+        '400':
+          description: Mandatory parameters missing or invalid
+
+  /dishes:
+    get:
+      summary: Get all dishes
+      operationId: getAllDishes
+      responses:
+        '200':
+          description: A list of dishes with their ingredients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dish'
+
+  /dishes/{id}/ingredients:
+    put:
+      summary: Update ingredients for a specific dish
+      description: Replaces current ingredient associations for the dish.
+      operationId: updateDishIngredients
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: The ID of the ingredient to associate
+      responses:
+        '200':
+          description: Dish ingredients updated successfully
+        '404':
+          description: Dish not found
+        '500':
+          description: Database or mapping error
+
+components:
+  schemas:
+    Unit:
+      type: string
+      enum: [PCS, KG, L]
+      description: Unit of measurement
+
+    Ingredient:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        price:
+          type: number
+          format: double
+        category:
+          type: string
+
+    Dish:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        sellingPrice:
+          type: number
+          format: double
+        dishIngredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/DishIngredient'
+
+    DishIngredient:
+      type: object
+      properties:
+        ingredient:
+          $ref: '#/components/schemas/Ingredient'
+        quantityRequired:
+          type: number
+          format: double
+        unit:
+          $ref: '#/components/schemas/Unit'
+
+    StockValue:
+      type: object
+      properties:
+        quantity:
+          type: number
+          format: double
+        unit:
+          $ref: '#/components/schemas/Unit'
