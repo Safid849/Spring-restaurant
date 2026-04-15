@@ -1,16 +1,15 @@
 package com.spring.restaurant.springrestaurant.entity;
 
 import com.spring.restaurant.springrestaurant.entity.enums.Unit;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
-public class DishIngredient {
-    private Dish dish;
-    private Ingredient ingredient;
+public class StockValue {
     private Double quantity;
     private Unit unit;
+
+    public StockValue() {
+    }
 }

@@ -1,22 +1,18 @@
 package com.spring.restaurant.springrestaurant.entity;
 
-import com.spring.restaurant.springrestaurant.entity.enums.MovementType;
-import lombok.AllArgsConstructor;
+import com.spring.restaurant.springrestaurant.entity.enums.MovementTypeEnum;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.AllArgsConstructor;
 import java.time.Instant;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
-
 public class StockMovement {
     private Integer id;
-    private Integer idIngredient;
-    private Ingredient ingredient;
-    private Double quantity;
-    private MovementType type;
+    private MovementTypeEnum type;
     private Instant creationDatetime;
-    private String unit;
+    private StockValue value;
+
+    public StockMovement() {
+    }
 }

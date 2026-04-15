@@ -1,48 +1,81 @@
 package com.spring.restaurant.springrestaurant.repository;
 
-import com.spring.restaurant.springrestaurant.entity.Ingredient;
-import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
+import com.spring.restaurant.springrestaurant.config.PostgresConfig;
+import com.spring.restaurant.springrestaurant.entity.*;
+import com.spring.restaurant.springrestaurant.entity.enums.CategoryEnum;
+import com.spring.restaurant.springrestaurant.entity.enums.MovementTypeEnum;
+import com.spring.restaurant.springrestaurant.entity.enums.Unit;
 import org.springframework.stereotype.Repository;
+
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-@RequiredArgsConstructor
 public class IngredientRepository {
-    private final JdbcTemplate jdbcTemplate;
+    private final PostgresConfig postgresConfig;
+
+    public IngredientRepository(PostgresConfig postgresConfig) {
+        this.postgresConfig = postgresConfig;
+    }
 
     public List<Ingredient> findAll() {
-        String sql = "SELECT id, name, category, price FROM ingredient";
-        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Ingredient.class));
+        List<Ingredient> ingredients = new ArrayList<>();
+        String sql = "SELECT * FROM ingredient";
+        try (Connection conn = postgresConfig.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                ingredients.add(map(rs, conn));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors du findAll: " + e.getMessage(), e);
+        }
+        return ingredients;
     }
 
     public Optional<Ingredient> findById(Integer id) {
         String sql = "SELECT * FROM ingredient WHERE id = ?";
-        try {
-            Ingredient ingredient = jdbcTemplate.queryForObject(sql,
-                    new BeanPropertyRowMapper<>(Ingredient.class), id);
-            return Optional.ofNullable(ingredient);
-        } catch (EmptyResultDataAccessException e) {
-            return Optional.empty();
+        try (Connection conn = postgresConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(map(rs, conn));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors du findById: " + e.getMessage(), e);
         }
+        return Optional.empty();
     }
 
-    public void save(Ingredient ing) {
-        String sql = "INSERT INTO ingredient (name, category, price) VALUES (?, ?, ?)";
-        jdbcTemplate.update(sql, ing.getName(), ing.getCategory().name(), ing.getPrice());
+    private Ingredient map(ResultSet rs, Connection conn) throws SQLException {
+        Ingredient ing = new Ingredient();
+        ing.setId(rs.getInt("id"));
+        ing.setName(rs.getString("name"));
+        ing.setPrice(rs.getDouble("price"));
+        ing.setCategory(CategoryEnum.valueOf(rs.getString("category").toUpperCase()));
+
+        ing.setStockMovementList(findMovementsByIngredientId(ing.getId(), conn));
+        return ing;
     }
 
-    public void update(Integer id, Ingredient ing) {
-        String sql = "UPDATE ingredient SET name = ?, category = ?, price = ? WHERE id = ?";
-        jdbcTemplate.update(sql, ing.getName(), ing.getCategory().name(), ing.getPrice(), id);
-    }
-
-    public void deleteById(Integer id) {
-        jdbcTemplate.update("DELETE FROM dishingredient WHERE id_ingredient = ?", id);
-        jdbcTemplate.update("DELETE FROM ingredient WHERE id = ?", id);
+    private List<StockMovement> findMovementsByIngredientId(Integer id, Connection conn) throws SQLException {
+        List<StockMovement> movements = new ArrayList<>();
+        String sql = "SELECT * FROM stockmovement WHERE id_ingredient = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    StockMovement sm = new StockMovement();
+                    sm.setId(rs.getInt("id"));
+                    sm.setType(MovementTypeEnum.valueOf(rs.getString("type").toUpperCase()));
+                    sm.setCreationDatetime(rs.getTimestamp("creation_datetime").toInstant());
+                    sm.setValue(new StockValue(rs.getDouble("quantity"), Unit.valueOf(rs.getString("unit").toUpperCase())));
+                    movements.add(sm);
+                }
+            }
+        }
+        return movements;
     }
 }
-

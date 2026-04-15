@@ -1,5 +1,5 @@
 package com.spring.restaurant.springrestaurant.entity.enums;
 
-public enum MovementType {
+public enum MovementTypeEnum {
     IN, OUT
 }

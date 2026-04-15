@@ -1,11 +1,10 @@
 package com.spring.restaurant.springrestaurant.controller;
 
-
 import com.spring.restaurant.springrestaurant.entity.Ingredient;
-import com.spring.restaurant.springrestaurant.entity.StockMovement;
-import com.spring.restaurant.springrestaurant.exception.ResourceNotFoundException;
+import com.spring.restaurant.springrestaurant.entity.StockValue;
+import com.spring.restaurant.springrestaurant.entity.enums.Unit;
+import com.spring.restaurant.springrestaurant.exception.NotFoundException;
 import com.spring.restaurant.springrestaurant.service.IngredientService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,54 +13,54 @@ import java.time.Instant;
 import java.util.List;
 
 @RestController
-@RequestMapping("/ingredients")
-@RequiredArgsConstructor
+public class IngredientController {
+    private final IngredientService ingredientService;
 
-    public class IngredientController {
-
-        private final IngredientService ingredientService;
-
-        @GetMapping
-        public ResponseEntity<List<Ingredient>> getAllIngredients() {
-            List<Ingredient> ingredients = ingredientService.getAllIngredients();
-            return ResponseEntity.ok(ingredients);
-        }
-
-        @GetMapping("/{id}")
-        public ResponseEntity<Ingredient> getIngredientById(@PathVariable Integer id)
-                throws ResourceNotFoundException {
-            Ingredient ingredient = ingredientService.getIngredientById(id);
-            return ResponseEntity.ok(ingredient);
-        }
-
-        @GetMapping("/{id}/stock")
-        public ResponseEntity<Double> getIngredientStock(
-                @PathVariable Integer id,
-                @RequestParam String at,
-                @RequestParam String unit
-        ) throws ResourceNotFoundException {
-            Double stockValue = ingredientService.getStockValue(id, at, unit);
-            return ResponseEntity.ok(stockValue);
-        }
-
-        @PostMapping
-        public ResponseEntity<Void> createIngredient(@RequestBody Ingredient ingredient) {
-            ingredientService.create(ingredient);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        }
-
-    @GetMapping("/{id}/stockMovements")
-    public List<StockMovement> getStockMovements(
-            @PathVariable Integer id,
-            @RequestParam Instant from,
-            @RequestParam Instant to) throws ResourceNotFoundException {
-        return ingredientService.getMovementsByIngredient(id, from, to);
+    public IngredientController(IngredientService ingredientService) {
+        this.ingredientService = ingredientService;
     }
 
-    @PostMapping("/{id}/stockMovements")
-    public List<StockMovement> postStockMovements(
-            @PathVariable Integer id,
-            @RequestBody List<StockMovement> movements) throws ResourceNotFoundException {
-        return ingredientService.addMovements(id, movements);
+    @GetMapping("/ingredients")
+    public ResponseEntity<?> getIngredients() {
+        try {
+            List<Ingredient> ingredients = ingredientService.findAll();
+            return ResponseEntity.status(HttpStatus.OK).body(ingredients);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
+
+    @GetMapping("/ingredients/{id}")
+    public ResponseEntity<?> getIngredientById(@PathVariable Integer id) {
+        try {
+            Ingredient ingredient = ingredientService.getById(id);
+            return ResponseEntity.status(HttpStatus.OK).body(ingredient);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/ingredients/{id}/stock")
+    public ResponseEntity<?> getStockValue(
+            @PathVariable Integer id,
+            @RequestParam(required = false) Instant at,
+            @RequestParam(required = false) Unit unit) {
+
+        if (at == null || unit == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Either mandatory query parameter `at` or `unit` is not provided.");
+        }
+
+        try {
+            StockValue stockValue = ingredientService.getStockValueAt(id, at, unit);
+            return ResponseEntity.status(HttpStatus.OK).body(stockValue);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
 }

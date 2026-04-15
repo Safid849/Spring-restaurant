@@ -1,55 +1,36 @@
 package com.spring.restaurant.springrestaurant.service;
 
-
-
 import com.spring.restaurant.springrestaurant.entity.Dish;
-import com.spring.restaurant.springrestaurant.entity.DishIngredient;
 import com.spring.restaurant.springrestaurant.entity.Ingredient;
-import com.spring.restaurant.springrestaurant.exception.ResourceNotFoundException;
-import com.spring.restaurant.springrestaurant.repository.DishIngredientRepository;
+import com.spring.restaurant.springrestaurant.exception.NotFoundException;
 import com.spring.restaurant.springrestaurant.repository.DishRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class DishService {
     private final DishRepository dishRepository;
-    private final DishIngredientRepository dishIngredientRepository;
-    private final IngredientService ingredientService;
 
-    public List<Dish> getAllDishes() throws ResourceNotFoundException {
-        List<Dish> dishes = dishRepository.findAll();
-
-        for (Dish dish : dishes) {
-            List<DishIngredient> components = dishIngredientRepository.findByDishId(dish.getId());
-
-            for (DishIngredient comp : components) {
-                Ingredient detail = ingredientService.getIngredientById(comp.getIdIngredient());
-                comp.setIngredient(detail);
-            }
-            dish.setIngredients(components);
-        }
-        return dishes;
+    public DishService(DishRepository dishRepository) {
+        this.dishRepository = dishRepository;
     }
 
-    @Transactional
-    public void updateDishIngredients(Integer dishId, List<DishIngredient> newComponents)
-            throws ResourceNotFoundException {
+    public List<Dish> findAll() {
+        return dishRepository.findAll();
+    }
 
-        if (!dishRepository.existsById(dishId)) {
-            throw new ResourceNotFoundException("Le plat " + dishId + " n'existe pas.");
+    public Dish getById(Integer id) throws NotFoundException {
+        Optional<Dish> optionalDish = dishRepository.findById(id);
+        if (optionalDish.isEmpty()) {
+            throw new NotFoundException("Dish.id=" + id + " is not found");
         }
-        dishIngredientRepository.deleteByDishId(dishId);
+        return optionalDish.get();
+    }
+    public void updateIngredients(Integer dishId, List<Ingredient> newIngredients) throws NotFoundException {
+        this.getById(dishId);
 
-        if (newComponents != null) {
-            for (DishIngredient comp : newComponents) {
-                comp.setIdDish(dishId);
-                dishIngredientRepository.save(comp);
-            }
-        }
+        dishRepository.updateIngredients(dishId, newIngredients);
     }
 }
